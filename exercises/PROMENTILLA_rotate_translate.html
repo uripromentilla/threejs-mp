@@ -1,0 +1,52 @@
+<html>
+	<head>
+		<style>
+			body { margin: 0; }
+			canvas { width: 100%; height: 100% }
+		</style>
+	</head>
+	<body>
+		<script src="js/three.js"></script>
+		<script>
+			var scene = new THREE.Scene();
+			var camera = new THREE.OrthographicCamera( -10, 10, 10,-10, 0.1,1000);
+
+			var renderer = new THREE.WebGLRenderer();
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			document.body.appendChild( renderer.domElement );
+
+			var geometry = new THREE.BoxGeometry( 1, 1, 1 );
+			var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+			var cube = new THREE.Mesh( geometry, material );
+			scene.add( cube );
+
+			camera.position.z = 5;
+
+			var right_direction = true;
+
+			var animate = function () {
+				requestAnimationFrame( animate );
+
+				if (right_direction) {
+					cube.position.x += 0.1;
+					cube.rotation.z += 0.05;
+					if (cube.position.x > 10) {
+						right_direction = false;
+					}
+				}
+
+				else {
+					cube.position.x -= 0.1;
+					cube.rotation.z -= 0.05;
+					if (cube.position.x < -10) {
+						right_direction = true;
+					}
+				}
+
+				renderer.render( scene, camera );
+			};
+
+			animate();
+		</script>
+	</body>
+</html>

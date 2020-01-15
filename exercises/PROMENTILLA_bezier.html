@@ -1,0 +1,88 @@
+<html>
+	<head>
+		<style>
+			body { margin: 0; }
+			canvas { width: 100%; height: 100% }
+		</style>
+	</head>
+	<body>
+		<script src="js/three.js"></script>
+		<script>
+			var scene = new THREE.Scene();
+			var camera = new THREE.OrthographicCamera( -10, 10, 10,-10, 0.1,1000);
+
+			var renderer = new THREE.WebGLRenderer();
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			document.body.appendChild( renderer.domElement );
+
+			var geometry = new THREE.BoxGeometry( 1, 1, 1 );
+			var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );
+			var cube = new THREE.Mesh( geometry, material );
+			scene.add( cube );
+
+			camera.position.z = 5;
+
+			cp = {
+				p1: {
+					x: -10,
+					y: -10,
+				},
+				p2: {
+					x: -5,
+					y: 5,
+				},
+				p3: {
+					x: 5,
+					y: 5,
+				},
+				p4: {
+					x: 10,
+					y: -10,
+				},
+			}
+
+			// (1-t)^3	= Math.pow((1-t), 3)
+			// 3*t*(1-t)^2	= Math.pow(3*t*(1-t), 2)
+			// 3*t^2*(1-t)	= 3*Math.pow(t,2)*(1-t)
+			// t^3 = Math.pow(t,3)
+
+			var t = 0
+			var right_direction = true;
+
+			var animate = function () {
+				requestAnimationFrame( animate );
+
+				if (right_direction) {
+					t += 0.01
+					if (t >= 1) {
+						right_direction = false;
+					}
+				}
+				else {
+					t -= 0.01
+					if (t <= 0) {
+						right_direction = true;
+					}
+				}
+				// console.log(t)
+				
+
+				cube.position.x =
+					Math.pow((1-t), 3) * cp.p1.x +
+					Math.pow(3*t*(1-t), 2) * cp.p2.x +
+					3*Math.pow(t,2)*(1-t) * cp.p3.x +
+					Math.pow(t,3) * cp.p4.x;
+
+				cube.position.y =
+					Math.pow((1-t), 3) * cp.p1.y +
+					Math.pow(3*t*(1-t), 2) * cp.p2.y +
+					3*Math.pow(t,2)*(1-t) * cp.p3.y +
+					Math.pow(t,3) * cp.p4.y;
+
+				renderer.render( scene, camera );
+			};
+
+			animate();
+		</script>
+	</body>
+</html>

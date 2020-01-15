@@ -1,0 +1,69 @@
+<html>
+	<head>
+		<style>
+			body { margin: 0; }
+			canvas { width: 100%; height: 100% }
+		</style>
+	</head>
+	<body>
+		<script src="js/three.js"></script>
+		<script>
+			var scene = new THREE.Scene();
+			var camera = new THREE.OrthographicCamera( -10, 10, 10,-10, 0.1,1000);
+
+			var renderer = new THREE.WebGLRenderer();
+			renderer.setSize( window.innerWidth, window.innerHeight );
+			document.body.appendChild( renderer.domElement );
+
+			var red_light = new THREE.PointLight( 0xff0000, 1, 100 );
+			red_light.position.set( -5, 0, 0 );
+			scene.add( red_light );
+			var red_pointLightHelper = new THREE.PointLightHelper( red_light, 1, 0xff0000 );
+			scene.add( red_pointLightHelper );
+
+			var green_light = new THREE.PointLight( 0x00ff00, 1, 100 );
+			green_light.position.set( 0, 0, 0 );
+			scene.add( green_light );
+			var green_pointLightHelper = new THREE.PointLightHelper( green_light, 1, 0x00ff00 );
+			scene.add( green_pointLightHelper );
+
+			var blue_light = new THREE.PointLight( 0x0000ff, 1, 100 );
+			blue_light.position.set( 5, 0, 0 );
+			scene.add( blue_light );
+			var blue_pointLightHelper = new THREE.PointLightHelper( blue_light, 1, 0x0000ff );
+			scene.add( blue_pointLightHelper );
+
+			var geometry = new THREE.SphereGeometry();
+			// var material = new THREE.MeshBasicMaterial( { color: 0x00ff00 } );;
+			var material = new THREE.MeshPhongMaterial(
+				{ 
+				specular: 0xffffff, 
+				// emissive: 0x000000,
+	            shininess: 100, 
+	        });
+			var sphere = new THREE.Mesh( geometry, material );
+			scene.add( sphere );
+
+			sphere.position.set(0, 0, -5);
+
+			camera.position.z = 10;
+
+            var radius = 10;
+            var theta = 0;
+			
+			var animate = function () {
+				requestAnimationFrame( animate );
+
+                sphere.position.x = radius * Math.cos(theta * Math.PI/180);
+                sphere.position.y = radius * Math.sin(theta * Math.PI/180); 
+                sphere.position.z = 0;
+
+                theta = (theta + 0.5) % 360;           
+
+				renderer.render( scene, camera );
+			};
+
+			animate();
+		</script>
+	</body>
+</html>

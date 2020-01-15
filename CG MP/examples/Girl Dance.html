@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<title>three.js webgl - lights - spot light</title>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, user-scalable=no, minimum-scale=1.0, maximum-scale=1.0">
+		<link type="text/css" rel="stylesheet" href="main.css">
+	</head>
+	<body>
+
+		<div id="info">
+		</div>
+
+		<script type="module">
+
+			import * as THREE from '../build/three.module.js';
+
+			import { TWEEN } from './jsm/libs/tween.module.min.js';
+			import { OrbitControls } from './jsm/controls/OrbitControls.js';
+
+			import { FBXLoader } from './jsm/loaders/FBXLoader.js';
+
+			import { GUI } from './jsm/libs/dat.gui.module.js';
+
+			var container, stats, controls;
+			var camera, scene, renderer, light;
+			var clock = new THREE.Clock();
+			var mixer;
+
+			var renderer = new THREE.WebGLRenderer();
+			renderer.setPixelRatio( window.devicePixelRatio );
+
+			// var camera = new THREE.PerspectiveCamera( 35, window.innerWidth / window.innerHeight, 1, 2000 );
+			var camera = new THREE.PerspectiveCamera( 45, window.innerWidth / window.innerHeight, 1, 3000 );
+			camera.position.set( 100, 200, 300 );
+
+			var controls = new OrbitControls( camera, renderer.domElement );
+
+			var scene = new THREE.Scene();
+
+			var matFloor = new THREE.MeshPhongMaterial();
+			// var matBox = new THREE.MeshPhongMaterial( { color: 0xaaaaaa } );
+
+			var geoFloor = new THREE.PlaneBufferGeometry( 2000, 2000 );
+			// var geoBox = new THREE.BoxBufferGeometry( 3, 1, 2 );
+
+			var mshFloor = new THREE.Mesh( geoFloor, matFloor );
+			mshFloor.rotation.x = - Math.PI * 0.5;
+			// var mshBox = new THREE.Mesh( geoBox, matBox );
+
+			var ambient = new THREE.AmbientLight( 0x111111 );
+
+			var spotLight1 = createSpotlight( 0xff0000 );
+			var spotLight2 = createSpotlight( 0x00ff00 );
+			var spotLight3 = createSpotlight( 0x0000ff );
+
+			var lightHelper1, lightHelper2, lightHelper3;
+
+			var gui;
+			// linear color space
+			var guiobj = {
+				color0: matFloor.color.getHex(),
+				color1: spotLight1.color.getHex(),
+				color2: spotLight2.color.getHex(),
+				color3: spotLight3.color.getHex(),
+			};
+
+			function init() {
+
+				// model
+				var loader = new FBXLoader();
+				loader.load( 'models/fbx/vrroird girl Dancing.fbx', function ( object ) {
+					mixer = new THREE.AnimationMixer( object );
+
+					var action = mixer.clipAction( object.animations[ 0 ] );
+					action.play();
+
+					object.traverse( function ( child ) {
+
+						if ( child.isMesh ) {
+
+							child.castShadow = true;
+							child.receiveShadow = true;
+
+							console.log("Child:");
+							console.log(child);
+							
+							console.log("Material:");
+							console.log(child.material);
+							
+							for (var material_color of child.material) {
+								material_color.color.setHex(guiobj.color0);
+								material_color.emissive.setHex(guiobj.color0);
+								material_color.specular.setHex(guiobj.color0);
+
+								// Add texture - [hellokitty.jpeg, gold.jpeg, hypnopattern.gif, cubecoolpattern.gif]
+								const texture = new THREE.TextureLoader().load('./textures/hypnopattern.gif');
+								material_color.map = texture
+								// Create material with texture
+								// const material = new THREE.MeshBasicMaterial({ map: texture });
+
+
+								// material_color.reflectivity = 0;
+								// material_color.shininess = 100;
+							}
+							// child.material[14].color.setHex(0xffffff);
+							// child.material[14].emissive.setHex(0xffffff);
+							// child.material[14].specular.setHex(0xffffff);
+
+							// console.log(child.material.color);
+							// // child.material.color = { color: 0x00ff00 };
+							// // child.material.color.setHex( 0x00ff00 );
+							// console.log(child.material.color);
+
+						}
+
+					} );
+
+					scene.add( object );
+
+				} );
+
+				renderer.shadowMap.enabled = true;
+				renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+				renderer.gammaOutput = true;
+
+				camera.position.set( 0, 0, 1500 );
+
+				let scale = 40
+				spotLight1.position.set( 15*scale, 40*scale, 45*scale );
+				spotLight2.position.set( 0*scale, 40*scale, 35*scale );
+				spotLight3.position.set( - 15*scale, 40*scale, 45*scale );
+
+				lightHelper1 = new THREE.SpotLightHelper( spotLight1 );
+				lightHelper2 = new THREE.SpotLightHelper( spotLight2 );
+				lightHelper3 = new THREE.SpotLightHelper( spotLight3 );
+
+				matFloor.color.set( 0x808080 );
+
+				mshFloor.receiveShadow = true;
+				mshFloor.position.set( 0, - 0.05, 0 );
+
+				// mshBox.castShadow = true;
+				// mshBox.receiveShadow = true;
+				// mshBox.position.set( 0, 5, 0 );
+
+				scene.add( mshFloor );
+				// scene.add( mshBox );
+				scene.add( ambient );
+				scene.add( spotLight1, spotLight2, spotLight3 );
+				scene.add( lightHelper1, lightHelper2, lightHelper3 );
+
+				document.body.appendChild( renderer.domElement );
+				onResize();
+				window.addEventListener( 'resize', onResize, false );
+
+
+				controls = new OrbitControls( camera, renderer.domElement );
+				controls.target.set( 0, 100, 0 );
+
+				// controls.target.set( 0, 7, 0 );
+				controls.maxPolarAngle = Math.PI / 2;
+				controls.update();
+
+				container = document.createElement( 'div' );
+				document.body.appendChild( container );
+
+				// gui
+				gui = new GUI();
+				gui.width = 300;
+				gui.domElement.style.userSelect = 'none';
+				var fl = gui.addFolder( 'Spotlight Colors' );
+
+				fl.addColor
+				gui.addColor(guiobj, 'color0')
+					.name( 'Floor Color:' )
+					.onChange( function (val) {
+						matFloor.color.setHex(val); render();
+					} );
+				gui.addColor(guiobj, 'color1')
+					.name( 'Spotlight1 Color:' )
+					.onChange( function (val) {
+						spotLight1.color.setHex( val ); render();
+						console.log(val);
+					} );
+  				gui.addColor(guiobj, 'color2')
+  					.name( 'Spotlight2 Color:' )
+					.onChange( function (val) {
+						spotLight2.color.setHex( val ); render();
+					} );
+  				gui.addColor(guiobj, 'color3')
+  					.name( 'Spotlight3 Color:' )
+					.onChange( function (val) {
+						spotLight3.color.setHex( val ); render();
+					} );
+				fl.open();
+				console.log(spotLight1);
+			}
+
+			function createSpotlight( color ) {
+
+				var newObj = new THREE.SpotLight( color, 2 );
+
+				newObj.castShadow = true;
+				newObj.angle = 0.3;
+				newObj.penumbra = 0.2;
+				newObj.decay = 2;
+				newObj.distance = 0;
+
+				return newObj;
+
+			}
+
+			function onResize() {
+
+				camera.aspect = window.innerWidth / window.innerHeight;
+				camera.updateProjectionMatrix();
+				renderer.setSize( window.innerWidth, window.innerHeight );
+
+			}
+
+			function tween( light ) {
+
+				new TWEEN.Tween( light ).to( {
+					angle: ( Math.random() * 0.7 ) + 0.1,
+					penumbra: Math.random() + 1
+				}, Math.random() * 3000 + 2000 )
+					.easing( TWEEN.Easing.Quadratic.Out ).start();
+
+				let scale = 40
+
+				new TWEEN.Tween( light.position ).to( {
+					x: ( Math.random() * 30*scale ) - 15*scale,
+					y: ( Math.random() * 10*scale ) + 15*scale,
+					z: ( Math.random() * 30*scale ) - 15*scale
+				}, Math.random() * 3000 + 2000 )
+					.easing( TWEEN.Easing.Quadratic.Out ).start();
+
+			}
+
+			function animate() {
+
+				tween( spotLight1 );
+				tween( spotLight2 );
+				tween( spotLight3 );
+
+				setTimeout( animate, 5000 );
+
+			}
+
+			function render() {
+
+				TWEEN.update();
+
+				if ( lightHelper1 ) lightHelper1.update();
+				if ( lightHelper2 ) lightHelper2.update();
+				if ( lightHelper3 ) lightHelper3.update();
+
+				renderer.render( scene, camera );
+
+				var delta = clock.getDelta();
+				if ( mixer ) mixer.update( delta );
+
+				requestAnimationFrame( render );
+
+			}
+
+			init();
+			render();
+			animate();
+
+			// var audio = new Audio('pokemonmusic.mp3');
+			// audio.play();
+
+		</script>
+	</body>
+</html>
